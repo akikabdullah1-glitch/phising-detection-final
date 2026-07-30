@@ -13,6 +13,21 @@ Phishing remains one of the primary attack vectors in cyber crime. This system p
 
 ---
 
+## 📂 Datasets & Public Sources
+
+Anyone who clones this repository can run the web app immediately using the pre-trained model binaries in `models/` without downloading large raw datasets.
+
+If you wish to re-train the models from scratch, download the raw datasets from the public benchmark sources below and place them in the `data/` directory:
+
+1. **PhiUSIIL Phishing URL Dataset** (~235,000 URLs):
+   - File Path: `data/PhiUSIIL_Phishing_URL_Dataset.csv`
+   - Public Source: [Kaggle / IEEE DataPort - PhiUSIIL Phishing URL Dataset](https://www.kaggle.com/datasets)
+2. **Phishing Email Dataset** (~18,600 Emails):
+   - File Path: `data/Phishing_Email.csv`
+   - Public Source: [Kaggle - Phishing Email Dataset](https://www.kaggle.com/datasets)
+
+---
+
 ## 🏗️ Project Architecture & Directory Structure
 
 ```
