@@ -19,4 +19,4 @@ ENV/
 Thumbs.db
 
 # Heavy training datasets (app runs directly on saved models/ binaries)
-data/*.csv
+
