@@ -3,8 +3,86 @@ import streamlit as st
 from frontend.templates import info_card
 
 
+# --- Sample test cases for user evaluation ---
+
+URL_SAMPLES = [
+    {
+        "label": "🔴 Phishing Example 1",
+        "url": "http://192.168.1.1/secure-login/verify?user=admin&token=abc123xyz&session=true",
+        "reason": "Uses a raw IP address, no HTTPS, and multiple query parameters."
+    },
+    {
+        "label": "🔴 Phishing Example 2",
+        "url": "http://paypa1-secure.login.verify.account-update.com/signin?redirect=true&next=dashboard",
+        "reason": "Misspelled brand name, deep subdomain chain, no HTTPS, long URL."
+    },
+    {
+        "label": "🔴 Phishing Example 3",
+        "url": "http://secure-banking.login-update.com/account%40verify%2Ftoken?id=99321&confirm=yes&auth=1",
+        "reason": "Percent-encoded obfuscation, no HTTPS, high special character density."
+    },
+    {
+        "label": "🟢 Legitimate Example 1",
+        "url": "https://www.bbc.co.uk/news",
+        "reason": "HTTPS active, short clean URL, trusted .co.uk TLD, no suspicious patterns."
+    },
+    {
+        "label": "🟢 Legitimate Example 2",
+        "url": "https://www.gov.uk/apply-universal-credit",
+        "reason": "HTTPS active, official .gov.uk domain, clean URL structure."
+    },
+]
+
+EMAIL_SAMPLES = [
+    {
+        "label": "🔴 Phishing Email Example 1 — Account Suspension",
+        "text": (
+            "Dear Customer,\n\n"
+            "Your account has been flagged for suspicious activity. "
+            "Your access will be suspended within 24 hours unless you verify your identity immediately.\n\n"
+            "Please click the secure link below to confirm your account and prevent suspension:\n"
+            "http://account-verify.secure-login.com/confirm?user=12345\n\n"
+            "Do not share this message with anyone.\n\n"
+            "Regards,\nSecurity Team"
+        ),
+    },
+    {
+        "label": "🔴 Phishing Email Example 2 — Prize Scam",
+        "text": (
+            "Congratulations! You have been selected as our lucky winner this month.\n\n"
+            "You have won a £500 Amazon gift card. To claim your prize, please confirm your details "
+            "by clicking the link below within 48 hours or the reward will be forfeited.\n\n"
+            "Click here to claim: http://prize-claim.win-reward.net/amazon?ref=winner99\n\n"
+            "This offer is strictly confidential. Do not inform others."
+        ),
+    },
+    {
+        "label": "🔴 Phishing Email Example 3 — Bank Credential Harvest",
+        "text": (
+            "Important Notice from Your Bank\n\n"
+            "We have detected unusual login activity on your account. "
+            "To protect your funds, we require you to verify your login credentials immediately.\n\n"
+            "Please provide your username and password on our secure verification page:\n"
+            "http://barclays-secure.account-login.net/verify\n\n"
+            "Failure to act within 12 hours will result in your account being locked.\n\n"
+            "The Security Department"
+        ),
+    },
+    {
+        "label": "🟢 Legitimate Email Example — Meeting Request",
+        "text": (
+            "Hi Sarah,\n\n"
+            "I hope you are well. I wanted to follow up regarding the project update we discussed last week.\n\n"
+            "Could we schedule a meeting for Thursday at 2pm? I have attached the agenda and the latest "
+            "report for your review ahead of the session.\n\n"
+            "Please let me know if the time works for you or if you would prefer an alternative slot.\n\n"
+            "Kind regards,\nJames"
+        ),
+    },
+]
+
+
 def render(url_meta, email_meta):
-    """Render the System Overview page."""
     st.subheader("Architecture & Detection Modules")
 
     col1, col2 = st.columns(2)
@@ -58,3 +136,32 @@ def render(url_meta, email_meta):
         """,
         unsafe_allow_html=True,
     )
+
+    # --- Sample Test Cases ---
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.subheader("🧪 Sample Test Cases")
+    st.markdown(
+        "Use the examples below to test the system. Copy any URL or email text and paste it into "
+        "the corresponding analyser tab. These cases cover both phishing and legitimate examples."
+    )
+
+    url_tab, email_tab = st.tabs(["🌐 URL Test Cases", "📧 Email Test Cases"])
+
+    with url_tab:
+        st.markdown("Copy any URL below and paste it into the **URL Threat Analyzer** tab.")
+        st.markdown("---")
+        for sample in URL_SAMPLES:
+            col_a, col_b = st.columns([3, 1])
+            with col_a:
+                st.markdown(f"**{sample['label']}**")
+                st.code(sample["url"], language=None)
+                st.caption(f"💬 Why: {sample['reason']}")
+            st.markdown("---")
+
+    with email_tab:
+        st.markdown("Copy any email text below and paste it into the **Email Body Analyzer** tab.")
+        st.markdown("---")
+        for sample in EMAIL_SAMPLES:
+            st.markdown(f"**{sample['label']}**")
+            st.code(sample["text"], language=None)
+            st.markdown("---")
