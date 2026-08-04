@@ -54,8 +54,7 @@ def build_feature_dataset(df):
         try:
             feat_df = get_url_features(url)
             row_dict = feat_df.iloc[0].to_dict()
-            # PhiUSIIL label convention: 1 = legitimate, 0 = phishing
-            # Map to system target convention: 0 = legitimate, 1 = phishing
+            
             row_dict["target"] = 1 - int(label)
             records.append(row_dict)
         except Exception as err:

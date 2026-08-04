@@ -44,7 +44,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import resample
 from xgboost import XGBClassifier
 
-# Add project root to path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from features.url_features import FEATURE_COLS
 
