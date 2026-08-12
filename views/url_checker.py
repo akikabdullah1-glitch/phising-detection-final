@@ -1,10 +1,53 @@
 import re
+from urllib.parse import urlparse
 
 import streamlit as st
 
 from features.url_features import get_url_features, is_known_url_tld
 from frontend.templates import risk_banner
 from utils.prediction import get_phishing_prob, risk_label
+
+
+# Verified legitimate domains — model predictions are overridden for these
+TRUSTED_DOMAINS = {
+    # Search & Tech
+    "google.com", "www.google.com", "google.co.uk",
+    "microsoft.com", "www.microsoft.com", "login.microsoftonline.com", "microsoftonline.com",
+    "apple.com", "www.apple.com", "appleid.apple.com", "support.apple.com",
+    "amazon.com", "www.amazon.com", "amazon.co.uk", "www.amazon.co.uk",
+    "facebook.com", "www.facebook.com",
+    "twitter.com", "www.twitter.com", "x.com", "www.x.com",
+    "linkedin.com", "www.linkedin.com",
+    "github.com", "www.github.com",
+    "youtube.com", "www.youtube.com",
+    "instagram.com", "www.instagram.com",
+    "netflix.com", "www.netflix.com",
+    "spotify.com", "www.spotify.com",
+    "openai.com", "www.openai.com", "chatgpt.com", "www.chatgpt.com",
+    # Banking & Finance
+    "paypal.com", "www.paypal.com",
+    "barclays.co.uk", "www.barclays.co.uk",
+    "hsbc.co.uk", "www.hsbc.co.uk",
+    "lloydsbank.com", "www.lloydsbank.com",
+    "natwest.com", "www.natwest.com",
+    # Government & Education
+    "gov.uk", "bbc.co.uk", "www.bbc.co.uk", "bbc.com", "www.bbc.com",
+    "nhs.uk", "www.nhs.uk",
+}
+
+
+def _is_trusted_domain(url):
+    """Return True if the URL belongs to a verified trusted domain."""
+    try:
+        parsed = urlparse(url if "://" in url else "https://" + url)
+        hostname = parsed.hostname or ""
+        hostname = hostname.lower().strip()
+        # Check exact match or any parent domain match
+        return hostname in TRUSTED_DOMAINS or any(
+            hostname.endswith("." + d) for d in TRUSTED_DOMAINS
+        )
+    except Exception:
+        return False
 
 
 def _result_box(pred, prob):
@@ -250,11 +293,22 @@ def render(model, feat_cols):
 
         pred = int(model.predict(feats)[0])
         prob = get_phishing_prob(model, feats)
-        trusted = is_known_url_tld(url_input)
+        trusted_tld = is_known_url_tld(url_input)
+
+        # Override false positives for well-known verified domains
+        if pred == 1 and _is_trusted_domain(url_input):
+            st.info(
+                "ℹ️ **Known Legitimate Domain Detected:** This URL belongs to a verified organisation "
+                "(e.g. Google, Microsoft, Apple, Amazon). The structural classifier flagged it due to "
+                "authentication path patterns (e.g. /login, /oauth, /account), which are common in "
+                "phishing URLs but also appear on legitimate login pages. The domain itself is trusted."
+            )
+            pred = 0
+            prob = 1 - prob
 
         _result_box(pred, prob)
 
-        suspicious, safe_points = _build_url_explanation(feats, pred, url_input, trusted)
+        suspicious, safe_points = _build_url_explanation(feats, pred, url_input, trusted_tld)
         _awareness_section(pred, suspicious, safe_points)
 
         with st.expander("🔍 Inspect Raw 18-Feature Vector"):
