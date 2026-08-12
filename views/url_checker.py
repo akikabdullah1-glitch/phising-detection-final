@@ -33,6 +33,10 @@ TRUSTED_DOMAINS = {
     # Government & Education
     "gov.uk", "bbc.co.uk", "www.bbc.co.uk", "bbc.com", "www.bbc.com",
     "nhs.uk", "www.nhs.uk",
+    # Microsoft consumer accounts
+    "live.com", "account.live.com", "login.live.com", "outlook.com", "www.outlook.com",
+    # Cloud Storage
+    "dropbox.com", "www.dropbox.com",
 }
 
 
