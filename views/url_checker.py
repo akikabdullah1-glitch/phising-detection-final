@@ -5,6 +5,7 @@ import streamlit as st
 
 from features.url_features import get_url_features, is_known_url_tld
 from frontend.templates import risk_banner
+from utils.ai_explainer import explain_url
 from utils.prediction import get_phishing_prob, risk_label
 
 
@@ -184,17 +185,12 @@ def _build_url_explanation(feat_df, pred, url_input, trusted):
     return suspicious, safe_points
 
 
-def _awareness_section(pred, suspicious, safe_points):
+def _awareness_section(pred, suspicious, safe_points, url, prob):
     """Render the classification explanation and awareness guidance."""
     st.markdown("<br>", unsafe_allow_html=True)
 
     if pred == 1:
         st.subheader("🔍 Why Was This URL Flagged as Phishing?")
-        st.markdown(
-            "The prediction is based on structural characteristics commonly associated with phishing URLs. "
-            "The **indicators below contributed to the risk assessment** — each one explains what was detected "
-            "and why it is considered a risk signal."
-        )
         st.caption(
             "ℹ️ Disclaimer: This tool performs offline structural text analysis only and does not "
             "visit the URL. Occasionally, legitimate websites with short domains or complex URL "
@@ -202,15 +198,30 @@ def _awareness_section(pred, suspicious, safe_points):
             "site, verify it directly in your browser address bar and check for the padlock icon."
         )
 
+        
+        indicator_labels = [title.replace("🔴 ", "") for title, _ in suspicious]
+        ai_text = explain_url(url, pred, prob, indicator_labels)
+
+        if ai_text:
+            st.markdown(ai_text)
+            st.markdown("---")
+        else:
+            st.markdown(
+                "The prediction is based on structural characteristics commonly associated with phishing URLs. "
+                "The **indicators below contributed to the risk assessment.**"
+            )
+
+        
         if suspicious:
-            for title, explanation in suspicious:
-                with st.expander(title, expanded=True):
+            with st.expander("🔎 View Detected Structural Risk Indicators", expanded=False):
+                for title, explanation in suspicious:
+                    st.markdown(f"**{title}**")
                     st.markdown(explanation)
+                    st.markdown("---")
         else:
             st.info(
                 "The model's decision was driven by a combination of subtle feature patterns "
-                "in the URL structure that collectively match phishing behaviour, even if no "
-                "single indicator is highly alarming on its own."
+                "in the URL structure that collectively match phishing behaviour."
             )
 
         st.markdown("<br>", unsafe_allow_html=True)
@@ -247,14 +258,24 @@ financial information, or personal data.
 """)
 
     else:
-        if safe_points:
-            st.subheader("✅ Why This URL Appears Legitimate")
+        st.subheader("✅ Why This URL Appears Legitimate")
+        
+        indicator_labels = [point.replace("✅ ", "") for point in safe_points]
+        ai_text = explain_url(url, pred, prob, indicator_labels)
+
+        if ai_text:
+            st.markdown(ai_text)
+            st.markdown("---")
+        else:
             st.markdown(
                 "No significant structural patterns associated with phishing were detected in this URL. "
-                "The following signals contributed to the low-risk assessment:"
+                "The **signals below contributed to the low-risk assessment:**"
             )
-            for point in safe_points:
-                st.success(point)
+
+        if safe_points:
+            with st.expander("🔎 View Detected Safe Structural Indicators", expanded=False):
+                for point in safe_points:
+                    st.success(point)
 
         st.markdown("<br>", unsafe_allow_html=True)
         st.subheader("💡 Stay Safe — Even on Legitimate-Looking Sites")
@@ -274,7 +295,7 @@ financial information, or personal data.
 
 def render(model, feat_cols):
     st.subheader("🌐 URL Structural Threat Inspection")
-    st.caption("Non-invasive lexical extraction — operates offline without initiating HTTP connections.")
+    st.caption("Structural feature extraction is performed locally. AI-powered explanations provide additional context for each result.")
 
     url_input = st.text_input(
         "Enter URL to Analyse",
@@ -313,7 +334,7 @@ def render(model, feat_cols):
         _result_box(pred, prob)
 
         suspicious, safe_points = _build_url_explanation(feats, pred, url_input, trusted_tld)
-        _awareness_section(pred, suspicious, safe_points)
+        _awareness_section(pred, suspicious, safe_points, url_input, prob)
 
         with st.expander("🔍 Inspect Raw 18-Feature Vector"):
             st.dataframe(feats.T.rename(columns={0: "Feature Value"}), width="stretch")

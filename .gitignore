@@ -20,3 +20,5 @@ Thumbs.db
 
 # Heavy training datasets (app runs directly on saved models/ binaries)
 
+# Streamlit secrets — contains API keys, do NOT push to GitHub
+.streamlit/secrets.toml

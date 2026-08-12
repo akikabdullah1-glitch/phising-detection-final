@@ -4,6 +4,7 @@ import streamlit as st
 
 from features.email_features import clean_text
 from frontend.templates import risk_banner
+from utils.ai_explainer import explain_email
 from utils.prediction import get_phishing_prob, risk_label
 
 
@@ -92,11 +93,18 @@ def _awareness_section(pred, raw_text):
         )
 
         if found_phishing:
+            # AI explanation using detected signals
+            ai_text = explain_email(raw_text, pred, 0.9, found_phishing)
+            if ai_text:
+                st.markdown(ai_text)
+                st.markdown("---")
+
             st.markdown("---")
             for i, label in enumerate(found_phishing, 1):
                 st.markdown(f"**{i}. {label}**")
                 _explain_phishing_phrase(label)
                 st.markdown("---")
+
         else:
             st.markdown("---")
             st.markdown("**1. Overall Language Pattern — High Phishing Resemblance**")
@@ -169,15 +177,23 @@ def _awareness_section(pred, raw_text):
 
     else:
         st.subheader("✅ Why This Email Appears Safe")
-        st.markdown(
-            "The NLP model found the language in this email consistent with normal, legitimate communication. "
-            "Here are the positive signals detected:"
-        )
+        
+        # AI explanation using detected safe signals (or empty if none)
+        ai_text = explain_email(raw_text, pred, 0.9, found_safe)
+        if ai_text:
+            st.markdown(ai_text)
+            st.markdown("---")
+        else:
+            st.markdown(
+                "The NLP model found the language in this email consistent with normal, legitimate communication. "
+                "Here are the positive signals detected:"
+            )
 
         if found_safe:
-            for label in found_safe:
-                st.success(f"✅ {label}")
-        else:
+            with st.expander("🔎 View Detected Safe NLP Indicators", expanded=False):
+                for label in found_safe:
+                    st.success(f"✅ {label}")
+        elif not ai_text:
             st.success(
                 "✅ The overall word patterns and vocabulary in this email are statistically consistent "
                 "with safe, non-phishing communication. No high-risk language triggers were found."
